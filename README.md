@@ -82,14 +82,12 @@ pip install -e .
 
 ## 2. Auto-Pilot Setup (Zero Prompting)
 
-You shouldn't have to type *"Please maintain the minified keys"* every time you chat. You can make Claude Code, Codex, and other agents use `llm-minifier` **automatically** by dropping a silent instruction file into your project.
+You shouldn't have to type "Please maintain the minified keys" every time you chat. You can make Claude Code, Codex, and other agents use llm-minifier automatically by dropping a silent instruction file into your project.
 
 ### Claude Code
+To make Claude Code automatically minify large files and respect the output format, simply create a CLAUDE.md file in the root of your project (or edit ~/.claude/CLAUDE.md for a global installation) and paste this:
 
-To make Claude Code automatically minify large files and respect the output format, simply create a `CLAUDE.md` file in the root of your project (or edit `~/.claude/CLAUDE.md` for a global installation) and paste this:
-
-
-# Data Processing Rules
+#### Data Processing Rules
 - Before reading any JSON file larger than 100 lines, ALWAYS use the terminal to run `llm-minify <file> -o temp.json` and read `temp.json` to save context space.
 - CRITICAL: When interacting with minified JSON, you must respond with valid JSON and maintain the EXACT same minified keys. Do NOT expand the vowels or add spaces.
 - If you generate new keys, write them normally in full text.
@@ -116,7 +114,7 @@ Copy the instruction block into your editor's respective rule files:
 
 ---
 
-## 3. Manual Usage (The Hacker Way)
+## 3. Manual Usage 
 
 If you just want to pipe data into an agent on the fly using standard input:
 
