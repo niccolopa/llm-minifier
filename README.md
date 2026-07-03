@@ -7,6 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.8%2B-111111?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/token%20savings-up%20to%2073%25-111111?style=flat-square" alt="Token Savings">
+  <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%7C%20Codex%20%7C%20Copilot-111111?style=flat-square" alt="Works with AI Agents">
   <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
 </p>
 
@@ -19,7 +20,7 @@
 
 You know the feeling. You dump a 5,000-line JSON database export into Claude. The tokenizer screams. The context window fills up with whitespace. Your API bill spikes.
 
-`llm-minifier` fixes that.
+`llm-minifier` puts an end to that. It acts as a pre-processor for your AI.
 
 ## Before / after
 
@@ -33,20 +34,28 @@ You want the AI to analyze a server configuration.
 }
 
 
+
 **With minifier (36 tokens):**
 
 
 {"srvrcnfgrtn":{"srvrhstnm":"apollo-database-01"}}
 
 
+## Numbers
 
-More survivors in the [Benchmarks](https://www.google.com/search?q=%23numbers).
+| Payload Type | Original Tokens | Minified Tokens | Savings |
+| --- | --- | --- | --- |
+| Single Server Config | 136 | 36 | **-73%** |
+| Deep Nested JSON | 450 | 220 | **-51%** |
+| 1000-row DB Dump | 58,000 | 33,000 | **-43%** |
 
-## Install
+## 1. Install the CLI Tool
 
-You need `python` and `git` on your PATH.
+Install the minifier engine globally on your system. You need [Python](https://www.python.org/downloads/) and [Git](https://www.google.com/search?q=https://git-scm.com/downloads) installed on your PATH.
 
-**Windows:**
+### Windows
+
+Open PowerShell or Command Prompt:
 
 
 git clone [https://github.com/YOUR_USERNAME/llm-minifier.git](https://github.com/YOUR_USERNAME/llm-minifier.git)
@@ -56,8 +65,9 @@ python -m venv venv
 pip install -e .
 
 
+### macOS / Linux
 
-**macOS / Linux:**
+Open your terminal:
 
 
 git clone [https://github.com/YOUR_USERNAME/llm-minifier.git](https://github.com/YOUR_USERNAME/llm-minifier.git)
@@ -67,40 +77,61 @@ source venv/bin/activate
 pip install -e .
 
 
-## Using it with AI Agents
 
-The tool acts as a pre-processor for your favorite CLI agents.
+
+
+## 2. Auto-Pilot Setup (Zero Prompting)
+
+You shouldn't have to type *"Please maintain the minified keys"* every time you chat. You can make Claude Code, Codex, and other agents use `llm-minifier` **automatically** by dropping a silent instruction file into your project.
 
 ### Claude Code
 
-Claude Code drains API credits fast with large files. Shrink them first:
+To make Claude Code automatically minify large files and respect the output format, simply create a `CLAUDE.md` file in the root of your project (or edit `~/.claude/CLAUDE.md` for a global installation) and paste this:
 
 
-# 1. Compress the data into a new file
-llm-minify huge_db.json -o tiny_db.json
-
-# 2. Feed the tiny file to Claude
-claude "Analyze tiny_db.json. CRITICAL: The data is minified. Maintain the exact same minified keys in your response."
-
-
-### Codex / GitHub Copilot CLI
-
-Pipe the compressed JSON directly into the agent's prompt using standard input:
-
-
-cat data.json | llm-minify | gh copilot suggest "Parse this exact JSON structure: $(cat)"
+# Data Processing Rules
+- Before reading any JSON file larger than 100 lines, ALWAYS use the terminal to run `llm-minify <file> -o temp.json` and read `temp.json` to save context space.
+- CRITICAL: When interacting with minified JSON, you must respond with valid JSON and maintain the EXACT same minified keys. Do NOT expand the vowels or add spaces.
+- If you generate new keys, write them normally in full text.
 
 
 
-### The Universal Clipboard
+### Codex / OpenCode
 
-Using ChatGPT or Claude in the browser? Minify straight to your clipboard and `Ctrl+V`.
+For Codex, create an `AGENTS.md` file in your project root (or `~/.codex/AGENTS.md` globally) and paste the exact same markdown block from above. Codex will auto-load it on every session.
 
-* **Windows:** `cat data.json | llm-minify | clip`
-* **macOS:** `cat data.json | llm-minify | pbcopy`
-* **Linux:** `cat data.json | llm-minify | xclip -selection clipboard`
+### GitHub Copilot CLI
 
-## The Python API
+Create a `.github/copilot-instructions.md` file in your repository and paste the rules. Copilot will transparently apply these instructions before every command execution.
+
+### Cursor / Windsurf / Cline
+
+Copy the instruction block into your editor's respective rule files:
+
+* **Cursor:** `.cursor/rules/llm-minifier.md`
+* **Windsurf:** `.windsurf/rules/llm-minifier.md`
+* **Cline:** `.clinerules`
+
+*That's it. Once the file is there, the agent knows exactly how to shrink payloads and handle compressed data. No manual prompting required.*
+
+---
+
+## 3. Manual Usage (The Hacker Way)
+
+If you just want to pipe data into an agent on the fly using standard input:
+
+
+# Pipe directly into GitHub Copilot CLI
+cat huge_data.json | llm-minify | gh copilot suggest "Parse this exact JSON structure: $(cat)"
+
+# Pipe to your clipboard (to paste into ChatGPT/Claude web)
+cat huge_data.json | llm-minify | clip      # Windows
+cat huge_data.json | llm-minify | pbcopy    # macOS
+cat huge_data.json | llm-minify | xclip -selection clipboard  # Linux
+
+
+
+## 4. The Python API
 
 Integrate it directly into your backend architecture.
 
@@ -121,17 +152,6 @@ restored_dict = decompress_payload(llm_response, mapping)
 
 
 
-## Numbers
-
-| Payload Type | Original Tokens | Minified Tokens | Savings |
-| --- | --- | --- | --- |
-| Single Server Config | 136 | 36 | **-73%** |
-| Deep Nested JSON | 450 | 220 | **-51%** |
-| 1000-row DB Dump | 58,000 | 33,000 | **-43%** |
-
 ## License
 
 [MIT](https://www.google.com/search?q=LICENSE). The shortest license that works.
-
-
-
