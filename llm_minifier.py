@@ -2,7 +2,8 @@ import json
 import re
 
 def minify_key(key):
-    if not isinstance(key, str) or len(key) <= 2: return key
+    if not isinstance(key, str) or len(key) <= 2:
+        return key
     first_char = key[0]
     rest_of_word = key[1:]
     minified_rest = re.sub(r'[aeiouAEIOU_]', '', rest_of_word)
@@ -19,17 +20,21 @@ def compress_payload(data, key_map=None):
             while mk in minified_dict and key_map.get(mk) != k:
                 mk += 'x'
             key_map[mk] = k
-            minified_dict[mk], key_map= compress_payload(v, key_map)
+
+            compressed_value, key_map= compress_payload(v, key_map)
+            minified_dict[mk]=compressed_value
+
             return minified_dict, key_map
         
-    elif isinstance(data, list):
+    if isinstance(data, list):
         processed_list = []
         for item in data:
-            res, key_map = compress_payload(item, key_map)
-            processed_list.append(res)
-            return processed_list, key_map
-        else:
-            return data, key_map
+            compressed_item, key_map = compress_payload(item, key_map)
+            processed_list.append(compressed_item)
+            
+        return processed_list, key_map
+    
+    return data, key_map
 
 def decompress_payload(minified_data, key_map):
     if isinstance(minified_data, dict):
@@ -38,7 +43,7 @@ def decompress_payload(minified_data, key_map):
             original_key=key_map.get(mk, mk)
             restored_dict[original_key] = decompress_payload(v, key_map)
         return restored_dict
-    elif isinstance(minified_data, list):
+    
+    if isinstance(minified_data, list):
         return [decompress_payload(item, key_map) for item in minified_data]
-    else:
-        return minified_data
+    return minified_data
