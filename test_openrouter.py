@@ -13,22 +13,22 @@ client = OpenAI(
 )
 
 def main():
-    original_data ={
-        "user_profile_information": {
-            'first_name':'Giovanni',
-            'last_name':'Bianco',
-            'favorite_programming_language': 'Python',
-            'years_of_experience': 5
+    original_data = {
+        "server_configuration": {
+            "server_hostname": "apollo-database-01",
+            "operating_system": "ubuntu-22.04",
+            "allocated_ram_gb": 16,
+            "cpu_core_count": 8
         }
     }
     print('\n-- PHASE 1: COMPRESSION')
     compressed_dict, mapping = compress_payload(original_data)
-    compressed_string = json.dumps(compressed_dict, separators=(',',','))
+    compressed_string = json.dumps(compressed_dict, separators=(',',':'))
 
     print(f'Payload to send: {compressed_string}')
     print(f'Map saved in RAM: {mapping}')
 
-    #2) Calls to LLM
+    #2) Call to LLM
     print('n\-- Phase 2: LLM elaboration --')
     print('Contacted OpenRouter...')
 
@@ -37,18 +37,17 @@ def main():
     CRITICAL INSTRUCTIONS:
     1. Respond ONLY with valid JSON.
     2. Maintain the EXACT same minified keys you received. Do not expand them.
-    3. If you add new keys, minify them by removing all vowels and underscores (keep the first letter).
+    3. If you add NEW keys, write them normally in full text (do not minify them).
     """
 
-    user_prompt = f"Read this user and add a 'seniority_level' field evaluating years of experience: {compressed_string}"
+    user_prompt = f"Parse this server. Add a Boolean field 'is_high_performance' that is true if it has at least 8 cores and 16 GB of RAM: {compressed_string}"
 
     response = client.chat.completions.create(
-        model='gpt-4o-mini',
+        model="meta-llama/llama-3.1-8b-instruct",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}    
         ],
-        response_format={"type": "json_object"}
     )
 
     llm_response_string = response.choices[0].message.content
@@ -56,14 +55,29 @@ def main():
 
     #3) Decompression
     print(f"\n -- Phase 3: Decompression --")
-    llm_response_dict= json.loads(llm_response_string)
+    try:
+        json_start=llm_response_string.find('{')
+        json_end= llm_response_string.rfind('}')+1
 
-    final_json = decompress_payload(llm_response_dict, mapping)
-    print(json.dumps(final_json, indent=2))
+        if json_start != -1 and json_end != -1:
+            clean_json_string= llm_response_string[json_start:json_end]
+        else:
+            clean_json_string = llm_response_string
+        
+        llm_response_dict = json.loads(clean_json_string)
 
-    print('\n--- API statistics ---')
-    print(f"Utilizzo del token per il prompt: {response.usage.prompt_tokens}")
-    print(f"Token used for response: {response.usage.completion_tokens}")
+        final_json = decompress_payload(llm_response_dict, mapping)
+        print(json.dumps(final_json, indent=2))
+
+        print('\n--- API statistics ---')
+        if response.usage:
+            print(f"Tokens used for the prompt:: {response.usage.prompt_tokens}")
+            print(f"Token used for response: {response.usage.completion_tokens}")
+        else:
+            print(f"The OpenRouter provider did not return token data for this call.")
+
+    except json.JSONDecodeError:
+        print("ERROR: The AI blocked the request or did not generate valid JSON.")
 
 if __name__=="__main__":
     main()
