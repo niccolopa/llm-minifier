@@ -14,36 +14,37 @@ def compress_payload(data, key_map=None):
         key_map = {}
 
     if isinstance(data, dict):
-        minified_dict={}
+        minified_dict = {}
         for k, v in data.items():
-            mk =minify_key(k)
+            mk = minify_key(k)
             while mk in minified_dict and key_map.get(mk) != k:
-                mk += 'x'
+                mk += "x"
             key_map[mk] = k
 
-            compressed_value, key_map= compress_payload(v, key_map)
-            minified_dict[mk]=compressed_value
+            valore_compresso, key_map = compress_payload(v, key_map)
+            minified_dict[mk] = valore_compresso
+            
+        return minified_dict, key_map
 
-            return minified_dict, key_map
-        
     if isinstance(data, list):
         processed_list = []
         for item in data:
-            compressed_item, key_map = compress_payload(item, key_map)
-            processed_list.append(compressed_item)
+            item_compresso, key_map = compress_payload(item, key_map)
+            processed_list.append(item_compresso)
             
         return processed_list, key_map
-    
+
     return data, key_map
 
 def decompress_payload(minified_data, key_map):
     if isinstance(minified_data, dict):
         restored_dict = {}
         for mk, v in minified_data.items():
-            original_key=key_map.get(mk, mk)
+            original_key = key_map.get(mk, mk)
             restored_dict[original_key] = decompress_payload(v, key_map)
         return restored_dict
-    
+        
     if isinstance(minified_data, list):
-        return [decompress_payload(item, key_map) for item in minified_data]
+         return [decompress_payload(item, key_map) for item in minified_data]
+         
     return minified_data
